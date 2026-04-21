@@ -116,6 +116,9 @@ router.put('/', requireAuth, async (req, res) => {
     const existingResult = await client.query('SELECT id, version, observations FROM files');
     const existingMap = new Map(existingResult.rows.map(r => [r.id, r]));
 
+    // Acumular eventos SSE para emitir DESPUÉS del COMMIT (evita race condition)
+    const pendingBroadcasts = [];
+
     for (const f of files) {
       const existing = existingMap.get(f.id);
       const isNew = !existing;
@@ -178,49 +181,51 @@ router.put('/', requireAuth, async (req, res) => {
          JSON.stringify(f.observations || []), JSON.stringify(f.history || [])]
       );
       if (isNew) {
-        broadcast('file:uploaded', {
+        pendingBroadcasts.push(['file:uploaded', {
           fileName:     f.name,
           uploaderName: f.uploaderName || req.session.displayName || req.session.userId,
           periodId:     f.periodId,
-        });
+        }]);
       } else if (isVersionBump) {
-        broadcast('file:status', {
+        pendingBroadcasts.push(['file:status', {
           fileId:   f.id,
           fileName: f.name,
           status:   `v${f.version}`,
-        });
+        }]);
       } else if (hasNewThread) {
-        broadcast('file:observation', {
+        pendingBroadcasts.push(['file:observation', {
           fileId:   f.id,
           fileName: f.name,
           type:     'nueva_duda',
           byUser:   req.session.displayName || req.session.userId,
-        });
+        }]);
       } else if (hasNewAnswer) {
-        broadcast('file:observation', {
+        pendingBroadcasts.push(['file:observation', {
           fileId:   f.id,
           fileName: f.name,
           type:     'respuesta',
           tipo:     answerTipo,
           byUser:   req.session.displayName || req.session.userId,
-        });
+        }]);
       } else {
         // Detectar si alguna fila fue marcada como procesada
         if (!isNew && Array.isArray(newObs) && Array.isArray(oldObs)) {
           const oldProcessed = oldObs.reduce((n, t) => n + (t.rows || []).filter(r => r.processed).length, 0);
           const newProcessed = newObs.reduce((n, t) => n + (t.rows || []).filter(r => r.processed).length, 0);
           if (newProcessed > oldProcessed) {
-            broadcast('file:observation', {
+            pendingBroadcasts.push(['file:observation', {
               fileId:   f.id,
               fileName: f.name,
               type:     'procesada',
               byUser:   req.session.displayName || req.session.userId,
-            });
+            }]);
           }
         }
       }
     }
     await client.query('COMMIT');
+    // Emitir SSE DESPUÉS del commit para que el GET devuelva datos actualizados
+    for (const [event, data] of pendingBroadcasts) broadcast(event, data);
     res.json({ ok: true });
   } catch (err) {
     await client.query('ROLLBACK');
