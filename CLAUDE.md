@@ -1,4 +1,4 @@
-# Dataflow v10 — Contexto del proyecto para Claude Code
+# Dataflow v11 — Contexto del proyecto para Claude Code
 
 ## Qué es esto
 App web interna para la Gerencia de RRHH de Círculo Católico (mutual uruguaya).
@@ -28,7 +28,8 @@ Login inicial: `admin / Admin-1234` · `superadmin / Super-1234`
 - **v7**: 8 mejoras al módulo Reclamos (antigüedad, contadores, notas internas, Kanban, multi-selección, borrador, plantillas de rechazo, aviso al bloquear)
 - **v8**: abstracción completa + API skeletons + backend Node.js/Express completo + Docker
 - **v9pruebas**: backend activo por defecto (VITE_USE_API=true) + sistema de auditoría completo + SSE
-- **v10** (actual): estados automáticos desde observaciones, campana de notificaciones, config por usuario, modal procesar dudas (Sueldos), vista por sector, SSE descarga, fix reclamos DB constraint, tipo de archivo en tabla
+- **v10**: estados automáticos desde observaciones, campana de notificaciones, config por usuario, modal procesar dudas (Sueldos), vista por sector, SSE descarga, fix reclamos DB constraint, tipo de archivo en tabla
+- **v11** (actual): estado 'Con arreglos (N)' diferenciado, columna 'Dudas/Arreglos', badges verdes cuando procesados, bloqueo re-descarga ZIP para Sueldos, arreglos colapsables en trazabilidad con procesamiento por fila
 
 ## Arquitectura del frontend
 ```
@@ -172,7 +173,8 @@ Ver `BACKEND_GUIDE.md` — guía completa con pasos, SQL, endpoints, LDAP, nginx
 ## Repositorio GitHub
 - v8 (producción): https://github.com/thelion182/Dataflow_v8
 - v9pruebas: https://github.com/thelion182/dataflow_v9pruebas
-- v10 (actual): https://github.com/thelion182/dataflow_v10
+- v10: https://github.com/thelion182/dataflow_v10
+- v11 (actual): https://github.com/thelion182/dataflow_v11
 - Branch principal: `master`
 - Cada cambio de código se commitea y pushea automáticamente a GitHub
 
